@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\OrderItem;
+use App\Models\CartItem;
 
 class Product extends Model
 {
@@ -47,15 +49,19 @@ class Product extends Model
     }
 
     // Solo productos activos con stock
-    public function scopeAvailable($query)
+    public function scopeAvailable(\Illuminate\Database\Eloquent\Builder $query)
     {
-        return $query->where('active', true)->where('stock', '>', 0);
+        return $query
+            ->where('active', 1)
+            ->whereNotNull('stock')
+            ->where('stock', '>', 0);
     }
     protected $appends = ['image_url'];
 
     public function getImageUrlAttribute(): ?string
     {
         if (!$this->image) return null;
-        return url('storage/' . $this->image);
+
+        return asset('storage/' . $this->image);
     }
 }

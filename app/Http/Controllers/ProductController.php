@@ -14,29 +14,29 @@ class ProductController extends Controller
 {
     $query = Product::available()->with('category');
 
-    if ($request->has('search')) {
+    if ($request->filled('search')) {
         $query->where('name', 'like', '%' . $request->search . '%');
     }
 
-    if ($request->has('category')) {
+    if ($request->filled('category')) {
         $query->whereHas('category', function ($q) use ($request) {
             $q->where('slug', $request->category);
         });
     }
 
-    if ($request->has('min_price')) {
+    if ($request->filled('min_price')) {
         $query->where('price', '>=', $request->min_price);
     }
 
-    if ($request->has('max_price')) {
+    if ($request->filled('max_price')) {
         $query->where('price', '<=', $request->max_price);
     }
 
-    if ($request->has('min_miles')) {
+    if ($request->filled('min_miles')) {
         $query->where('miles_per_dollar', '>=', $request->min_miles);
     }
 
-    if ($request->has('sort')) {
+    if ($request->filled('sort')) {
         match($request->sort) {
             'price_asc'   => $query->orderBy('price', 'asc'),
             'price_desc'  => $query->orderBy('price', 'desc'),
