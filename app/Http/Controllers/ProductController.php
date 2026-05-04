@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
- public function index(Request $request)
+public function index(Request $request)
 {
     $query = Product::available()->with('category');
 
@@ -25,37 +25,42 @@ class ProductController extends Controller
     }
 
     if ($request->filled('min_price')) {
-        $query->where('price', '>=', $request->min_price);
+        $query->where('price', '>=', (float) $request->min_price);
     }
 
     if ($request->filled('max_price')) {
-        $query->where('price', '<=', $request->max_price);
+        $query->where('price', '<=', (float) $request->max_price);
     }
 
     if ($request->filled('min_miles')) {
-        $query->where('miles_per_dollar', '>=', $request->min_miles);
+        $query->where('miles_per_dollar', '>=', (int) $request->min_miles);
     }
 
-    if ($request->filled('sort')) {
-        match($request->sort) {
-            'price_asc'   => $query->orderBy('price', 'asc'),
-            'price_desc'  => $query->orderBy('price', 'desc'),
-            'miles_desc'  => $query->orderBy('miles_per_dollar', 'desc'),
-            'newest'      => $query->latest(),
-            default       => $query->orderBy('name'),
-        };
-    } else {
-        $query->orderBy('name');
+    switch ($request->sort) {
+        case 'price_asc':
+            $query->orderBy('price', 'asc');
+            break;
+        case 'price_desc':
+            $query->orderBy('price', 'desc');
+            break;
+        case 'miles_desc':
+            $query->orderBy('miles_per_dollar', 'desc');
+            break;
+        case 'newest':
+            $query->latest();
+            break;
+        default:
+            $query->orderBy('name');
     }
 
     $products = $query->paginate($request->get('per_page', 12));
 
     return response()->json([
-        'message'      => 'Productos obtenidos correctamente',
-        'data'         => $products->items(),
-        'total'        => $products->total(),
+        'message' => 'Productos obtenidos correctamente',
+        'data' => $products->items(),
+        'total' => $products->total(),
         'current_page' => $products->currentPage(),
-        'last_page'    => $products->lastPage(),
+        'last_page' => $products->lastPage(),
     ]);
 }
 

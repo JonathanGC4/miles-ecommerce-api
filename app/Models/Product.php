@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\OrderItem;
 use App\Models\CartItem;
+use App\Models\Category;
 
 class Product extends Model
 {
@@ -63,5 +64,9 @@ class Product extends Model
         if (!$this->image) return null;
 
         return asset('storage/' . $this->image);
+    }
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
     }
 }
