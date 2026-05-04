@@ -49,6 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('seller')->group(function () {
         Route::post('/miles/earn', [MilesController::class, 'earn']);
         Route::get ('/admin/clients',   [UserController::class,  'findByEmail']);
+        Route::get ('/admin/clients/all', [UserController::class, 'clients']);
     });
 
     // Solo admin

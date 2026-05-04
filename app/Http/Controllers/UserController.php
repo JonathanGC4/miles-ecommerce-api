@@ -82,4 +82,26 @@ public function findByEmail(Request $request)
         'data'    => $client,
     ]);
 }
+// Listar todos los clients para el select
+public function clients()
+{
+    $clients = User::where('role', 'client')
+        ->with('milesAccount.tier')
+        ->orderBy('name')
+        ->get()
+        ->map(fn($u) => [
+            'id'           => $u->id,
+            'name'         => $u->name,
+            'email'        => $u->email,
+            'tier'         => $u->milesAccount?->tier?->name,
+            'balance'      => $u->milesAccount?->balance,
+            'lifetime_miles' => $u->milesAccount?->lifetime_miles,
+            'multiplier'   => $u->milesAccount?->tier?->multiplier,
+        ]);
+
+    return response()->json([
+        'message' => 'Clientes obtenidos correctamente',
+        'data'    => $clients,
+    ]);
+}
 }
