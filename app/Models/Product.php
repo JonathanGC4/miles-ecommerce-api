@@ -3,10 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\OrderItem;
-use App\Models\CartItem;
-use App\Models\Category;
-use App\Models\Review;
 
 class Product extends Model
 {
@@ -29,9 +25,9 @@ class Product extends Model
         'active'           => 'boolean',
     ];
 
-    protected $appends = ['image_url', 'average_rating', 'reviews_count'];
+    protected $appends = ['image_url'];
 
-    // ─── Relaciones ───────────────────────────────────────
+    // ─── Relaciones ───────────────────────────────
 
     public function orderItems()
     {
@@ -48,42 +44,24 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function reviews()
-    {
-        return $this->hasMany(Review::class);
+    // ─── Accessor imagen ──────────────────────────
+
+public function getImageUrlAttribute(): ?string
+{
+    if (!$this->image) return null;
+
+    // URL completa — ya es una URL válida
+    if (str_starts_with($this->image, 'http')) {
+        return $this->image;
     }
 
-    // ─── Accessors ────────────────────────────────────────
+    // Storage local — evitar /storage/storage/
+    $path = ltrim($this->image, '/');
+    $path = str_replace('storage/', '', $path);
+    return url('storage/' . $path);
+}
 
-    public function getImageUrlAttribute(): ?string
-    {
-        if (!$this->image) return null;
-
-        // URL completa de Cloudinary
-        if (str_starts_with($this->image, 'http')) {
-            return $this->image;
-        }
-
-        // Public ID de Cloudinary
-        if ($this->image_public_id) {
-            return cloudinary()->image($this->image_public_id)->toUrl();
-        }
-
-        // Fallback storage local (desarrollo)
-        return asset('storage/' . $this->image);
-    }
-
-    public function getAverageRatingAttribute(): float
-    {
-        return round($this->reviews()->avg('rating') ?? 0, 1);
-    }
-
-    public function getReviewsCountAttribute(): int
-    {
-        return $this->reviews()->count();
-    }
-
-    // ─── Helpers ──────────────────────────────────────────
+    // ─── Helpers ──────────────────────────────────
 
     public function hasStock(int $quantity = 1): bool
     {
@@ -95,7 +73,7 @@ class Product extends Model
         return (int) round($this->price * $this->miles_per_dollar * $multiplier);
     }
 
-    // ─── Scopes ───────────────────────────────────────────
+    // ─── Scopes ───────────────────────────────────
 
     public function scopeAvailable($query)
     {

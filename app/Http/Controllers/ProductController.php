@@ -7,6 +7,7 @@ use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use Illuminate\Http\Request;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -59,64 +60,57 @@ class ProductController extends Controller
         ]);
     }
 
-    public function store(StoreProductRequest $request)
-    {
-        $data = $request->validated();
+public function store(StoreProductRequest $request)
+{
+    $data = $request->validated();
 
-        if ($request->hasFile('image')) {
-            $uploaded        = Cloudinary::upload($request->file('image')->getRealPath(), [
-                'folder'         => 'miles-ecommerce/products',
-                'transformation' => [['width' => 800, 'height' => 800, 'crop' => 'limit']],
-            ]);
-            $data['image']           = $uploaded->getPublicId();
-            $data['image_public_id'] = $uploaded->getPublicId();
-        }
-
-        $product = Product::create($data);
-
-        return response()->json([
-            'message' => 'Producto creado correctamente',
-            'data'    => $product,
-        ], 201);
+    if ($request->hasFile('image')) {
+        $data['image'] = $request->file('image')
+            ->store('products', 'public');
     }
 
-    public function update(UpdateProductRequest $request, Product $product)
-    {
-        $data = $request->validated();
+    $product = Product::create($data);
 
-        if ($request->hasFile('image')) {
-            // Eliminar imagen anterior de Cloudinary
-            if ($product->image_public_id) {
-                Cloudinary::destroy($product->image_public_id);
-            }
+    return response()->json([
+        'message' => 'Producto creado correctamente',
+        'data'    => $product,
+    ], 201);
+}
 
-            $uploaded                = Cloudinary::upload($request->file('image')->getRealPath(), [
-                'folder'         => 'miles-ecommerce/products',
-                'transformation' => [['width' => 800, 'height' => 800, 'crop' => 'limit']],
-            ]);
-            $data['image']           = $uploaded->getSecurePath();
-            $data['image_public_id'] = $uploaded->getPublicId();
+public function update(UpdateProductRequest $request, Product $product)
+{
+    $data = $request->validated();
+
+    if ($request->hasFile('image')) {
+        // Eliminar imagen anterior
+        if ($product->image) {
+            Storage::disk('public')->delete($product->image);
         }
-
-        $product->update($data);
-
-        return response()->json([
-            'message' => 'Producto actualizado correctamente',
-            'data'    => $product,
-        ]);
+        $data['image'] = $request->file('image')
+            ->store('products', 'public');
     }
 
-    public function destroy(Product $product)
-    {
-        if ($product->image_public_id) {
-            Cloudinary::destroy($product->image_public_id);
-        }
-        $product->update(['active' => false]);
+    $product->update($data);
 
-        return response()->json([
-            'message' => 'Producto desactivado correctamente',
-        ]);
+    return response()->json([
+        'message' => 'Producto actualizado correctamente',
+        'data'    => $product,
+    ]);
+}
+
+public function destroy(Product $product)
+{
+    if ($product->image) {
+        Storage::disk('public')->delete($product->image);
     }
+    $product->update(['active' => false]);
+
+    return response()->json([
+        'message' => 'Producto desactivado correctamente',
+    ]);
+}
+
+
 
     public function adminIndex(Request $request)
     {
